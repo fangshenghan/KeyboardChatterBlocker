@@ -12,6 +12,11 @@ namespace KeyboardChatterBlocker.Languages
         {
             this.language = "English";
             this.chatter_threshold_label = "Chatter Threshold (ms)";
+            this.ignored_async_keys = "Ignored Keys(Async)";
+            this.ignored_keys = "Ignored Keys";
+            this.listening_keys = "Listening Keys...";
+            this.change_keys = "Change Keys";
+            this.clear_keys = "Clear Keys";
         }
         
     }

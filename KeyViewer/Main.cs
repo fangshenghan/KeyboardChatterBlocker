@@ -4,10 +4,7 @@ using HarmonyLib;
 using System.Reflection;
 using UnityModManagerNet;
 using UnityEngine;
-using GDMiniJSON;
 using KeyboardChatterBlocker.Languages;
-using static UnityModManagerNet.UnityModManager;
-using AdofaiTweaks.Tweaks.KeyLimiter;
 
 namespace KeyboardChatterBlocker
 {
@@ -21,9 +18,6 @@ namespace KeyboardChatterBlocker
 
         public static Dictionary<string, Language> langs = new Dictionary<string, Language>();
 
-        public static bool usingTweaks = false;
-        public static KeyLimiterSettings kls;
-
         public static void Setup(UnityModManager.ModEntry modEntry)
         {
             Main.modEntry = modEntry;
@@ -33,6 +27,7 @@ namespace KeyboardChatterBlocker
             Main.setting = UnityModManager.ModSettings.Load<Setting>(modEntry);
             modEntry.OnToggle = OnToggle;
             modEntry.OnGUI = OnGUI;
+            modEntry.OnUpdate = OnUpdate;
             modEntry.OnSaveGUI = OnSaveGUI;
         }
 
@@ -42,22 +37,7 @@ namespace KeyboardChatterBlocker
             {
                 harmony = new Harmony(modEntry.Info.Id);
                 harmony.PatchAll(Assembly.GetExecutingAssembly());
-
-                ModEntry tweaks = UnityModManager.FindMod("AdofaiTweaks");
-                if (tweaks != null && tweaks.Active)
-                {
-                    usingTweaks = true;
-                }
-                else
-                {
-                    usingTweaks = false;
-                }
-
-                if (usingTweaks)
-                {
-                    kls = Utils.GetKeyLimiterSettings();
-                }
-            } 
+            }
             else
             {
                 harmony.UnpatchAll(modEntry.Info.Id);
@@ -65,23 +45,10 @@ namespace KeyboardChatterBlocker
             return true;
         }
 
+        public static bool listeningKeys = false;
+
         private static void OnGUI(UnityModManager.ModEntry modEntry)
         {
-            /*foreach(MethodBase original in Harmony.GetAllPatchedMethods())
-            { 
-                if (original.HasMethodBody())
-                {
-                    Patches patchInfo = Harmony.GetPatchInfo(original);
-                    foreach (HarmonyLib.Patch p in patchInfo.Prefixes)
-                    {
-                        if (p.PatchMethod.Module.Name.Contains("AdofaiTweaks"))
-                        {
-                            Main.Logger.Log(p.owner);
-                        }
-                    }
-                }
-            }*/
-
             GUILayout.BeginHorizontal();
             GUILayout.Label("Language");
             GUIStyle gs = new GUIStyle(GUI.skin.button);
@@ -103,6 +70,97 @@ namespace KeyboardChatterBlocker
             }
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            if (AsyncInputManager.isActive)
+            {
+                GUILayout.Label(langs[setting.lang].ignored_async_keys + ": ");
+                foreach (ushort k in setting.ignoredAsyncKeys)
+                {
+                    GUILayout.Label(k + "(" + (keyLabels.ContainsKey(k) ? keyLabels[k] : "Unknown") + ")");
+                }
+            }
+            else
+            {
+                GUILayout.Label(langs[setting.lang].ignored_keys + ": ");
+                foreach (KeyCode k in setting.ignoredKeys)
+                {
+                    GUILayout.Label(k.ToString());
+                }
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            if (listeningKeys)
+            {
+                if (GUILayout.Button(langs[setting.lang].listening_keys))
+                {
+                    listeningKeys = false;
+                }
+            }
+            else
+            {
+                if (GUILayout.Button(langs[setting.lang].change_keys))
+                {
+                    listeningKeys = true;
+                }
+            }
+            if (GUILayout.Button(langs[setting.lang].clear_keys))
+            {
+                if (AsyncInputManager.isActive)
+                {
+                    setting.ignoredAsyncKeys.Clear();
+                }
+                else
+                {
+                    setting.ignoredKeys.Clear();
+                }
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
+        public static Dictionary<ushort, String> keyLabels = new Dictionary<ushort, String>();
+
+        private static void OnUpdate(UnityModManager.ModEntry modEntry, float value)
+        {
+            if (Main.listeningKeys)
+            {
+                if (AsyncInputManager.isActive)
+                {
+                    foreach (AsyncKeyCode k in Utils.GetKeysDownThisFrame())
+                    {
+                        keyLabels[k.key] = k.label.ToString();
+                        if (setting.ignoredAsyncKeys.Contains(k.key))
+                        {
+                            Main.setting.ignoredAsyncKeys.Remove(k.key);
+                        }
+                        else
+                        {
+                            Main.setting.ignoredAsyncKeys.Add(k.key);
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (int i in Enum.GetValues(typeof(KeyCode)))
+                    {
+                        KeyCode keyCode = (KeyCode)i;
+                        if (Input.GetKeyDown(keyCode) && !keyCode.ToString().Contains("Mouse"))
+                        {
+                            if (setting.ignoredKeys.Contains(keyCode))
+                            {
+                                setting.ignoredKeys.Remove(keyCode);
+                            }
+                            else
+                            {
+                                setting.ignoredKeys.Add(keyCode);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         private static void OnSaveGUI(UnityModManager.ModEntry modEntry)

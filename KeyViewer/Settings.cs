@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using UnityModManagerNet;
+using UnityEngine;
 
 namespace KeyboardChatterBlocker
 {
@@ -13,6 +14,9 @@ namespace KeyboardChatterBlocker
     {
         public int inputInterval = 100;
         public string lang = "English";
+
+        public List<ushort> ignoredAsyncKeys = new List<ushort>();
+        public List<KeyCode> ignoredKeys = new List<KeyCode>();
 
         public override void Save(UnityModManager.ModEntry modEntry) {
             var filepath = GetPath(modEntry);

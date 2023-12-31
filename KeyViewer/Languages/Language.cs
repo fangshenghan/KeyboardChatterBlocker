@@ -10,6 +10,11 @@ namespace KeyboardChatterBlocker
     {
         public String language;
         public String chatter_threshold_label;
+        public String ignored_async_keys;
+        public String ignored_keys;
+        public String change_keys;
+        public String listening_keys;
+        public String clear_keys;
 
     }
 }
