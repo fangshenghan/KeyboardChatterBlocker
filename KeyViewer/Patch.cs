@@ -33,38 +33,47 @@ namespace KeyboardChatterBlocker
         private static int scrController_CountValidKeysPressed_NoTweaks()
         {
             int num = 0;
-            if (AsyncInputManager.isActive)
+            long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
+            scrController ins = scrController.instance;
+            ins.keyLimiterOverCounter = 0;
+
+            Dictionary<AnyKeyCode, float> downKeysDuration = (Dictionary<AnyKeyCode, float>)AccessTools.Field(ins.GetType(), "downKeysDuration").GetValue(ins);
+            if ((States)ins.stateMachine.GetState() != States.PlayerControl)
             {
-                long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-                foreach (AsyncKeyCode k in AsyncInputManager.keyDownMask)
+                downKeysDuration.Clear();
+                ins.maximumUsedKeys = 0;
+            }
+
+            int num2 = ADOBase.controller.unlockKeyLimiter ? 16 : 10;
+            for (int j = downKeysDuration.Count - 1; j >= 0; j--)
+            {
+                KeyValuePair<AnyKeyCode, float> keyValuePair = downKeysDuration.ElementAt(j);
+                if (Time.time - keyValuePair.Value >= 0.5f)
                 {
-                    if (Main.setting.ignoredAsyncKeys.Contains(k.key))
-                    {
-                        num++;
-                        continue;
-                    }
-                    if (!lastKeyPressAsync.ContainsKey(k.key))
-                    {
-                        lastKeyPressAsync.Add(k.key, 0L);
-                    }
-                    if (now - lastKeyPressAsync[k.key] > (long)Main.setting.inputInterval || now - lastKeyPressAsync[k.key] <= 2L)
-                    {
-                        num++;
-                        lastKeyPressAsync[k.key] = now;
-                    }
-                    else
-                    {
-                        Main.Logger.Log("Blocked Async Key: " + k.label + " time: " + (now - lastKeyPressAsync[k.key]) + "ms.");
-                    }
+                    downKeysDuration.Remove(keyValuePair.Key);
                 }
             }
-            else
+            foreach (AnyKeyCode anyKeyCode in RDInput.GetMainPressKeys())
             {
-                long now = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-                foreach (int k in Enum.GetValues(typeof(KeyCode)))
+                bool flag = false;
+                if (!downKeysDuration.ContainsKey(anyKeyCode) && downKeysDuration.Count >= num2)
                 {
-                    KeyCode keycode = (KeyCode)k;
-                    if (Input.GetKeyDown(keycode))
+                    ins.keyLimiterOverCounter++;
+                    flag = true;
+                }
+                if (!flag)
+                {
+                    downKeysDuration[anyKeyCode] = Time.time;
+                }
+                object value = anyKeyCode.value;
+                if (value is KeyCode)
+                {
+                    KeyCode keycode = (KeyCode)value;
+                    ins.keyFrequency[keycode] = (ins.keyFrequency.ContainsKey(keycode) ? (ins.keyFrequency[keycode] + 1) : 0);
+                    ins.keyTotal++;
+
+                    if (!Main.setting.enableKeyLimiter || Main.setting.allowedKeys.Contains(keycode))
                     {
                         if (Main.setting.ignoredKeys.Contains(keycode))
                         {
@@ -86,7 +95,38 @@ namespace KeyboardChatterBlocker
                         }
                     }
                 }
+
+                if (value is AsyncKeyCode)
+                {
+                    AsyncKeyCode k = (AsyncKeyCode)value;
+                    ins.keyFrequency[k] = (ins.keyFrequency.ContainsKey(k) ? (ins.keyFrequency[k] + 1) : 0);
+                    ins.keyTotal++;
+
+                    if (!Main.setting.enableKeyLimiter || Main.setting.allowedAsyncKeys.Contains(k.key))
+                    {
+                        if (Main.setting.ignoredAsyncKeys.Contains(k.key))
+                        {
+                            num++;
+                            continue;
+                        }
+                        if (!lastKeyPressAsync.ContainsKey(k.key))
+                        {
+                            lastKeyPressAsync.Add(k.key, 0L);
+                        }
+                        if (now - lastKeyPressAsync[k.key] > (long)Main.setting.inputInterval || now - lastKeyPressAsync[k.key] <= 2L)
+                        {
+                            num++;
+                            lastKeyPressAsync[k.key] = now;
+                        }
+                        else
+                        {
+                            Main.Logger.Log("Blocked Async Key: " + k.label + " time: " + (now - lastKeyPressAsync[k.key]) + "ms.");
+                        }
+                    }
+                }
             }
+            ins.maximumUsedKeys = Math.Max(ins.maximumUsedKeys, downKeysDuration.Count);
+
             return num;
         }
     }

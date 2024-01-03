@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace KeyboardChatterBlocker.Languages
+﻿namespace KeyboardChatterBlocker.Languages
 {
     public class Korean : Language
     {
@@ -17,6 +11,9 @@ namespace KeyboardChatterBlocker.Languages
             this.listening_keys = "청취 키...";
             this.change_keys = "키 변경";
             this.clear_keys = "모든 키 지우기";
+            this.enable_key_limiter = "Enable Key Limiter";
+            this.allowed_async_keys = "Allowed Keys (Async)";
+            this.allowed_keys = "Allowed Keys";
         }
         
     }

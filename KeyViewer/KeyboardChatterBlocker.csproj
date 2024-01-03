@@ -26,7 +26,7 @@
       <HintPath>bin\Release\Accessibility.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>bin\Release\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\IReplay\KeyViewer\bin\Release\net48\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
       <HintPath>bin\Release\Assembly-CSharp-firstpass.dll</HintPath>

@@ -5,6 +5,7 @@ using System.Reflection;
 using UnityModManagerNet;
 using UnityEngine;
 using KeyboardChatterBlocker.Languages;
+using System.Text.RegularExpressions;
 
 namespace KeyboardChatterBlocker
 {
@@ -45,7 +46,7 @@ namespace KeyboardChatterBlocker
             return true;
         }
 
-        public static bool listeningKeys = false;
+        public static bool listeningKeysIgnore = false, listeningKeysLimiter = false;
 
         private static void OnGUI(UnityModManager.ModEntry modEntry)
         {
@@ -62,13 +63,26 @@ namespace KeyboardChatterBlocker
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
             GUILayout.Label(langs[setting.lang].chatter_threshold_label);
             string s = GUILayout.TextField(setting.inputInterval + "", GUILayout.Width(150));
-            if (!s.Equals(""))
+            try
             {
-                setting.inputInterval = int.Parse(s);
+                if (!listeningKeysIgnore && !listeningKeysLimiter)
+                {
+                    setting.inputInterval = int.Parse(Regex.Replace(s, @"\D", ""));
+                }
+            }
+            catch
+            {
+                setting.inputInterval = 100;
             }
             GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
@@ -92,18 +106,18 @@ namespace KeyboardChatterBlocker
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (listeningKeys)
+            if (listeningKeysIgnore)
             {
                 if (GUILayout.Button(langs[setting.lang].listening_keys))
                 {
-                    listeningKeys = false;
+                    listeningKeysIgnore = false;
                 }
             }
             else
             {
                 if (GUILayout.Button(langs[setting.lang].change_keys))
                 {
-                    listeningKeys = true;
+                    listeningKeysIgnore = true;
                 }
             }
             if (GUILayout.Button(langs[setting.lang].clear_keys))
@@ -119,13 +133,76 @@ namespace KeyboardChatterBlocker
             }
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            setting.enableKeyLimiter = GUILayout.Toggle(setting.enableKeyLimiter, langs[setting.lang].enable_key_limiter);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            if (setting.enableKeyLimiter)
+            {
+                GUILayout.BeginHorizontal();
+                if (AsyncInputManager.isActive)
+                {
+                    GUILayout.Label(langs[setting.lang].allowed_async_keys + ": ");
+                    foreach (ushort k in setting.allowedAsyncKeys)
+                    {
+                        GUILayout.Label(k + "(" + (keyLabels.ContainsKey(k) ? keyLabels[k] : "Unknown") + ")");
+                    }
+                }
+                else
+                {
+                    GUILayout.Label(langs[setting.lang].allowed_keys + ": ");
+                    foreach (KeyCode k in setting.allowedKeys)
+                    {
+                        GUILayout.Label(k.ToString());
+                    }
+                }
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                if (listeningKeysLimiter)
+                {
+                    if (GUILayout.Button(langs[setting.lang].listening_keys))
+                    {
+                        listeningKeysLimiter = false;
+                    }
+                }
+                else
+                {
+                    if (GUILayout.Button(langs[setting.lang].change_keys))
+                    {
+                        listeningKeysLimiter = true;
+                    }
+                }
+                if (GUILayout.Button(langs[setting.lang].clear_keys))
+                {
+                    if (AsyncInputManager.isActive)
+                    {
+                        setting.allowedAsyncKeys.Clear();
+                    }
+                    else
+                    {
+                        setting.allowedKeys.Clear();
+                    }
+                }
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.BeginHorizontal();
+            GUILayout.EndHorizontal();
         }
 
         public static Dictionary<ushort, String> keyLabels = new Dictionary<ushort, String>();
 
         private static void OnUpdate(UnityModManager.ModEntry modEntry, float value)
         {
-            if (Main.listeningKeys)
+            if (Main.listeningKeysIgnore)
             {
                 if (AsyncInputManager.isActive)
                 {
@@ -156,6 +233,41 @@ namespace KeyboardChatterBlocker
                             else
                             {
                                 setting.ignoredKeys.Add(keyCode);
+                            }
+                        }
+                    }
+                }
+            }else if (Main.listeningKeysLimiter)
+            {
+                if (AsyncInputManager.isActive)
+                {
+                    foreach (AsyncKeyCode k in Utils.GetKeysDownThisFrame())
+                    {
+                        keyLabels[k.key] = k.label.ToString();
+                        if (setting.allowedAsyncKeys.Contains(k.key))
+                        {
+                            Main.setting.allowedAsyncKeys.Remove(k.key);
+                        }
+                        else
+                        {
+                            Main.setting.allowedAsyncKeys.Add(k.key);
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (int i in Enum.GetValues(typeof(KeyCode)))
+                    {
+                        KeyCode keyCode = (KeyCode)i;
+                        if (Input.GetKeyDown(keyCode) && !keyCode.ToString().Contains("Mouse"))
+                        {
+                            if (setting.allowedKeys.Contains(keyCode))
+                            {
+                                setting.allowedKeys.Remove(keyCode);
+                            }
+                            else
+                            {
+                                setting.allowedKeys.Add(keyCode);
                             }
                         }
                     }

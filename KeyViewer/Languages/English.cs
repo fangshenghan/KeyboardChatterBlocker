@@ -17,6 +17,9 @@ namespace KeyboardChatterBlocker.Languages
             this.listening_keys = "Listening Keys...";
             this.change_keys = "Change Keys";
             this.clear_keys = "Clear Keys";
+            this.enable_key_limiter = "Enable Key Limiter";
+            this.allowed_async_keys = "Allowed Keys (Async)";
+            this.allowed_keys = "Allowed Keys";
         }
         
     }

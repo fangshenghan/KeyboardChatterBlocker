@@ -15,6 +15,9 @@ namespace KeyboardChatterBlocker
         public String change_keys;
         public String listening_keys;
         public String clear_keys;
+        public String enable_key_limiter;
+        public String allowed_async_keys;
+        public String allowed_keys;
 
     }
 }

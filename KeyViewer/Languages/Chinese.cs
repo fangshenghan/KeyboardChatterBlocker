@@ -17,6 +17,9 @@ namespace KeyboardChatterBlocker.Languages
             this.change_keys = "改变按键";
             this.listening_keys = "等待按键...";
             this.clear_keys = "清空按键";
+            this.enable_key_limiter = "开启按键限制器";
+            this.allowed_async_keys = "允许的按键 (异步)";
+            this.allowed_keys = "允许的按键";
         }
         
     }
