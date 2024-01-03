@@ -54,73 +54,83 @@ namespace KeyboardChatterBlocker
                     downKeysDuration.Remove(keyValuePair.Key);
                 }
             }
+
             foreach (AnyKeyCode anyKeyCode in RDInput.GetMainPressKeys())
             {
-                bool flag = false;
-                if (!downKeysDuration.ContainsKey(anyKeyCode) && downKeysDuration.Count >= num2)
-                {
-                    ins.keyLimiterOverCounter++;
-                    flag = true;
-                }
-                if (!flag)
-                {
-                    downKeysDuration[anyKeyCode] = Time.time;
-                }
                 object value = anyKeyCode.value;
                 if (value is KeyCode)
                 {
-                    KeyCode keycode = (KeyCode)value;
-                    ins.keyFrequency[keycode] = (ins.keyFrequency.ContainsKey(keycode) ? (ins.keyFrequency[keycode] + 1) : 0);
-                    ins.keyTotal++;
-
-                    if (!Main.setting.enableKeyLimiter || Main.setting.allowedKeys.Contains(keycode))
+                    KeyCode keyCode = (KeyCode)value;
+                    if (!Main.setting.enableKeyLimiter || Main.setting.allowedKeys.Contains(keyCode) || (States)ins.stateMachine.GetState() != States.PlayerControl)
                     {
-                        if (Main.setting.ignoredKeys.Contains(keycode))
+                        bool flag = false;
+                        if (!downKeysDuration.ContainsKey(anyKeyCode) && downKeysDuration.Count >= num2)
+                        {
+                            ins.keyLimiterOverCounter++;
+                            flag = true;
+                        }
+                        if (!flag)
+                        {
+                            downKeysDuration[anyKeyCode] = Time.time;
+                        }
+
+                        ins.keyFrequency[keyCode] = (ins.keyFrequency.ContainsKey(keyCode) ? (ins.keyFrequency[keyCode] + 1) : 0);
+                        ins.keyTotal++;
+                        if (Main.setting.ignoredKeys.Contains(keyCode))
                         {
                             num++;
                             continue;
                         }
-                        if (!lastKeyPress.ContainsKey(keycode))
+                        if (!lastKeyPress.ContainsKey(keyCode))
                         {
-                            lastKeyPress.Add(keycode, 0L);
+                            lastKeyPress.Add(keyCode, 0L);
                         }
-                        if (now - lastKeyPress[keycode] > (long)Main.setting.inputInterval || now - lastKeyPress[keycode] <= 2L)
+                        if (now - lastKeyPress[keyCode] > (long)Main.setting.inputInterval || now - lastKeyPress[keyCode] <= 2L)
                         {
                             num++;
-                            lastKeyPress[keycode] = now;
+                            lastKeyPress[keyCode] = now;
                         }
                         else
                         {
-                            Main.Logger.Log("Blocked Key: " + keycode + " time: " + (now - lastKeyPress[keycode]) + "ms.");
+                            Main.Logger.Log("Blocked Key: " + keyCode + " time: " + (now - lastKeyPress[keyCode]) + "ms.");
                         }
                     }
-                }
-
-                if (value is AsyncKeyCode)
+                } 
+                else if (value is AsyncKeyCode)
                 {
-                    AsyncKeyCode k = (AsyncKeyCode)value;
-                    ins.keyFrequency[k] = (ins.keyFrequency.ContainsKey(k) ? (ins.keyFrequency[k] + 1) : 0);
-                    ins.keyTotal++;
-
-                    if (!Main.setting.enableKeyLimiter || Main.setting.allowedAsyncKeys.Contains(k.key))
+                    AsyncKeyCode asyncKeyCode = (AsyncKeyCode)value;
+                    if (!Main.setting.enableKeyLimiter || Main.setting.allowedAsyncKeys.Contains(asyncKeyCode.key) || (States)ins.stateMachine.GetState() != States.PlayerControl)
                     {
-                        if (Main.setting.ignoredAsyncKeys.Contains(k.key))
+                        bool flag = false;
+                        if (!downKeysDuration.ContainsKey(anyKeyCode) && downKeysDuration.Count >= num2)
+                        {
+                            ins.keyLimiterOverCounter++;
+                            flag = true;
+                        }
+                        if (!flag)
+                        {
+                            downKeysDuration[anyKeyCode] = Time.time;
+                        }
+
+                        ins.keyFrequency[asyncKeyCode] = (ins.keyFrequency.ContainsKey(asyncKeyCode) ? (ins.keyFrequency[asyncKeyCode] + 1) : 0);
+                        ins.keyTotal++;
+                        if (Main.setting.ignoredAsyncKeys.Contains(asyncKeyCode.key))
                         {
                             num++;
                             continue;
                         }
-                        if (!lastKeyPressAsync.ContainsKey(k.key))
+                        if (!lastKeyPressAsync.ContainsKey(asyncKeyCode.key))
                         {
-                            lastKeyPressAsync.Add(k.key, 0L);
+                            lastKeyPressAsync.Add(asyncKeyCode.key, 0L);
                         }
-                        if (now - lastKeyPressAsync[k.key] > (long)Main.setting.inputInterval || now - lastKeyPressAsync[k.key] <= 2L)
+                        if (now - lastKeyPressAsync[asyncKeyCode.key] > (long)Main.setting.inputInterval || now - lastKeyPressAsync[asyncKeyCode.key] <= 2L)
                         {
                             num++;
-                            lastKeyPressAsync[k.key] = now;
+                            lastKeyPressAsync[asyncKeyCode.key] = now;
                         }
                         else
                         {
-                            Main.Logger.Log("Blocked Async Key: " + k.label + " time: " + (now - lastKeyPressAsync[k.key]) + "ms.");
+                            Main.Logger.Log("Blocked Async Key: " + asyncKeyCode.label + " time: " + (now - lastKeyPressAsync[asyncKeyCode.key]) + "ms.");
                         }
                     }
                 }

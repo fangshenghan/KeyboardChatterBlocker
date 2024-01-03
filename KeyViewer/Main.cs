@@ -148,18 +148,22 @@ namespace KeyboardChatterBlocker
                 if (AsyncInputManager.isActive)
                 {
                     GUILayout.Label(langs[setting.lang].allowed_async_keys + ": ");
+                    string keys = "";
                     foreach (ushort k in setting.allowedAsyncKeys)
                     {
-                        GUILayout.Label(k + "(" + (keyLabels.ContainsKey(k) ? keyLabels[k] : "Unknown") + ")");
+                        keys += k + "(" + (keyLabels.ContainsKey(k) ? keyLabels[k] : "Unknown") + ")  ";
                     }
+                    GUILayout.Label(keys);
                 }
                 else
                 {
                     GUILayout.Label(langs[setting.lang].allowed_keys + ": ");
+                    string keys = "";
                     foreach (KeyCode k in setting.allowedKeys)
                     {
-                        GUILayout.Label(k.ToString());
+                        keys += k.ToString() + "  ";
                     }
+                    GUILayout.Label(keys);
                 }
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
