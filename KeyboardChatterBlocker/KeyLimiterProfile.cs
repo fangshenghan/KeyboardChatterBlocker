@@ -17,7 +17,7 @@ public class KeyLimiterProfile
 
 	public KeyLimiterProfile(string name)
 	{
-		name = name;
+		this.name = name;
 	}
 
 	public KeyLimiterProfile()

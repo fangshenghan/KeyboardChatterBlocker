@@ -340,7 +340,7 @@ public static class Main
 	{
 		foreach (KeyValuePair<ushort, KeyCode> item in Utils.SkyUnityKeyCodeDictionary)
 		{
-			keyLabels[item.Key] = AsyncKeyMapper.UnityKeyToAsyncKey(item.Value).ToString();
+			keyLabels[item.Key] = SkyHookKeyMapper.UnityKeyToSkyHookKey(item.Value).ToString();
 		}
 	}
 
