@@ -50,12 +50,67 @@ public static class Patch
 		}
 	}
 
-	[HarmonyPatch(typeof(SkyHookManager), "HookCallback")]
+    [HarmonyPatch(typeof(Input), nameof(Input.GetKeyDown), new[] { typeof(KeyCode) })]
+    public static class Unity_GetKeyDown_Patch
+    {
+        public static bool Prefix(KeyCode key, ref bool __result)
+        {
+            if (Main.isListeningKeysIgnore || Main.isListeningKeysLimiter)
+            {
+                __result = false;
+                return false;
+            }
+            return true;
+        }
+    }
+
+
+    [HarmonyPatch(typeof(Input), nameof(Input.GetKey), new[] { typeof(KeyCode) })]
+    public static class Unity_GetKey_Patch
+    {
+        public static bool Prefix(KeyCode key, ref bool __result)
+        {
+            if (Main.isListeningKeysIgnore || Main.isListeningKeysLimiter)
+            {
+                __result = false;
+                return false;
+            }
+            return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(SkyHookManager), "HookCallback")]
 	public static class SkyHookManager_HookCallback_Patch
 	{
 		public static bool Prefix(SkyHookEvent ev)
 		{
-			if (CachedInstance is null)
+            if (Main.isListeningKeysIgnore)
+            {
+                if (ev.Type == SkyHook.EventType.KeyPressed && !Utils.MouseKeys.Contains(ev.Label))
+                {
+                    if (Main.setting.ignoredAsyncKeys.Contains(ev.Key))
+                        Main.setting.ignoredAsyncKeys.Remove(ev.Key);
+                    else
+                        Main.setting.ignoredAsyncKeys.Add(ev.Key);
+                    Main.UpdateSelectedKeyLimiterProfile();
+                }
+                return false; 
+            }
+
+            if (Main.isListeningKeysLimiter)
+            {
+                if (ev.Type == SkyHook.EventType.KeyPressed && !Utils.MouseKeys.Contains(ev.Label))
+                {
+                    if (Main.listeningKeyLimiterProfile.allowedAsyncKeys.Contains(ev.Key))
+                        Main.listeningKeyLimiterProfile.allowedAsyncKeys.Remove(ev.Key);
+                    else
+                        Main.listeningKeyLimiterProfile.allowedAsyncKeys.Add(ev.Key);
+                    Main.UpdateSelectedKeyLimiterProfile();
+                }
+                return false; 
+            }
+
+            if (CachedInstance is null)
 			{
 				return true;
 			}

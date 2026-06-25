@@ -455,13 +455,12 @@ public static class Utils
 		}
 	};
 
-	public static List<AsyncKeyCode> GetKeysDownThisFrame()
-	{
-		List<AsyncKeyCode> list = new List<AsyncKeyCode>();
-		foreach (AsyncKeyCode item in AsyncInputManager.frameDependentKeyDownMask)
-		{
-			list.Add(item);
-		}
-		return list;
-	}
+    public static readonly List<KeyLabel> MouseKeys = new List<KeyLabel>
+    {
+        KeyLabel.MouseLeft,
+        KeyLabel.MouseMiddle,
+        KeyLabel.MouseRight,
+        KeyLabel.MouseX1,
+        KeyLabel.MouseX2
+    };
 }
